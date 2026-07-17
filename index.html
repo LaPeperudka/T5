@@ -47,7 +47,7 @@
   .opts button { padding: 18px 12px; font-size: 17px; }
   .opts button.sel { background: var(--navy); color: #fff; border-color: var(--navy); }
   .conf-label { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
-  .conf { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 24px; }
+  .conf { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 24px; }
   .conf button { padding: 14px 4px; font-size: 15px; }
   .conf button.sel { background: var(--orange); color: #fff; border-color: var(--orange); }
   .conf-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin: -16px 0 24px; }
@@ -406,7 +406,7 @@ function buildSetB() {
    4. TEILNEHMER-FLOW  (within-subjects: beide Sets, Folge zufällig)
    ============================================================ */
 const $ = id => document.getElementById(id);
-const CONF_LEVELS = [55, 65, 75, 85, 95];
+const CONF_LEVELS = [50, 60, 70, 80, 90, 100];
 
 let blocks = [];          // [{set:"A", items:[...]}, {set:"B", items:[...]}]
 let order  = "";          // "AB" oder "BA"
@@ -562,9 +562,9 @@ function showResult() {
   const nAll = answers.filter(a => a.korrekt).length;
   $("quizScore").innerHTML =
     `<div class="qs"><b>${nAll}</b> von <b>${answers.length}</b> Fragen richtig beantwortet (<b>${all.hit.toFixed(2)}%</b>)</div>`
-    + band("niedriger (55% oder 65%)", [55, 65])
-    + band("mittlerer (75%)", [75])
-    + band("hoher (85% oder 95%)", [85, 95]);
+    + band("niedriger (50% oder 60%)", [50, 60])
+    + band("mittlerer (75%)", [70, 80])
+    + band("hoher (90% oder 100%)", [90, 100]);
 
   // Punktdiagramm
   drawCurves("myChart", [
