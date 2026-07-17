@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalibrierungsaufgabe – Urteilen &amp; Entscheiden</title>
+<style>
+  :root {
+    --navy: #1C2B4A;
+    --orange: #E05535;
+    --sand: #F2EDE7;
+    --card: #FFFFFF;
+    --muted: #6B7A90;
+    --border: #D9DEE7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--sand);
+    color: var(--navy);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  h2 { font-size: 20px; margin: 0 0 12px; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0 0 28px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; margin-bottom: 16px;
+  }
+  button {
+    font: inherit; cursor: pointer; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--navy); padding: 12px 18px; transition: all .12s;
+  }
+  button:hover:not(:disabled) { border-color: var(--navy); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .primary { background: var(--navy); color: #fff; border-color: var(--navy); font-weight: 600; }
+  .primary:hover:not(:disabled) { background: #263a63; }
+  .danger { border-color: var(--orange); color: var(--orange); }
+  .progress { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 24px; }
+  .progress > div { height: 100%; background: var(--orange); transition: width .25s; }
+  .qnum { font-size: 13px; color: var(--muted); margin-bottom: 6px; letter-spacing: .04em; text-transform: uppercase; }
+  .qtext { font-size: 22px; font-weight: 600; margin-bottom: 22px; line-height: 1.35; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 26px; }
+  .opts button { padding: 18px 12px; font-size: 17px; }
+  .opts button.sel { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .conf-label { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .conf { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 24px; }
+  .conf button { padding: 14px 4px; font-size: 15px; }
+  .conf button.sel { background: var(--orange); color: #fff; border-color: var(--orange); }
+  .conf-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin: -16px 0 24px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type=text], input[type=password] {
+    font: inherit; padding: 11px 13px; border: 1px solid var(--border);
+    border-radius: 8px; background: #fff; color: var(--navy); flex: 1; min-width: 160px;
+  }
+  .hidden { display: none !important; }
+  .center { text-align: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .pill-a { background: #E8EDF6; color: var(--navy); }
+  .pill-b { background: #FBE6E1; color: var(--orange); }
+  .stat { display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 8px; }
+  .stat div { min-width: 110px; }
+  .stat span { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .stat strong { font-size: 26px; font-weight: 700; }
+  .legend { display: flex; gap: 20px; font-size: 13px; margin-top: 12px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .err { color: var(--orange); font-size: 14px; margin-top: 10px; }
+  .block-badge {
+    display: inline-block; padding: 3px 11px; border-radius: 99px;
+    background: #E8EDF6; color: var(--navy); font-size: 12px;
+    font-weight: 600; letter-spacing: .03em; margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ START ============ -->
+  <div id="start">
+    <h1>Kalibrierungsaufgabe</h1>
+    <p class="sub">Seminar: Urteilen &amp; Entscheiden</p>
+    <div class="card">
+      <p style="margin-top:0">Sie beantworten gleich <strong>20 Fragen</strong> mit je zwei Antwortmöglichkeiten, aufgeteilt in zwei Blöcke.</p>
+      <p>Nach jeder Frage geben Sie an, <strong>wie sicher</strong> Sie sich Ihrer Antwort sind — auf einer Skala von 55% bis 95%.</p>
+      <p>50% würde bedeuten: reines Raten. 100% würde bedeuten: absolute Sicherheit.</p>
+      <p>Am Ende sehen Sie Ihre persönliche Kalibrierungskurve.</p>
+      <p class="note">Es gibt kein Zurück. Ihre Antworten sind anonym, sofern Sie keinen Namen eingeben.</p>
+      <div class="row" style="margin-top:20px">
+        <input type="text" id="pname" placeholder="Name oder Kürzel (optional)" maxlength="40">
+        <button class="primary" id="btnStart">Starten</button>
+      </div>
+      <div class="note" style="margin-top:18px">
+        <a href="#" id="lnkAdmin" style="color:var(--muted)">Dozentenansicht</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div id="quiz" class="hidden">
+    <div class="progress"><div id="bar" style="width:0%"></div></div>
+    <div class="card">
+      <div class="block-badge" id="badge">Block 1</div>
+      <div class="qnum" id="qnum">Frage 1 von 10</div>
+      <div class="qtext" id="qtext">—</div>
+      <div class="opts">
+        <button id="optA">A</button>
+        <button id="optB">B</button>
+      </div>
+      <div class="conf-label">Wie sicher sind Sie sich?</div>
+      <div class="conf">
+        <button data-c="55">55%</button>
+        <button data-c="65">65%</button>
+        <button data-c="75">75%</button>
+        <button data-c="85">85%</button>
+        <button data-c="95">95%</button>
+      </div>
+      <div class="conf-ends"><span>Reines Raten</span><span>Sehr sicher</span></div>
+      <button class="primary" id="btnNext" disabled style="width:100%">Weiter</button>
+    </div>
+  </div>
+
+  <!-- ============ BLOCK BREAK ============ -->
+  <div id="break" class="hidden">
+    <div class="card center">
+      <h2 style="margin-top:8px">Block 1 abgeschlossen</h2>
+      <p class="sub">Es folgen 10 weitere Fragen im gleichen Format.</p>
+      <button class="primary" id="btnBreak">Weiter zu Block 2</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULT ============ -->
+  <div id="result" class="hidden">
+    <h1>Ihre Kalibrierungskurve</h1>
+    <p class="sub">Basierend auf Ihren 20 Antworten</p>
+
+    <div class="card">
+      <svg id="myChart" viewBox="0 0 460 400" style="width:100%;height:auto"></svg>
+      <div class="legend">
+        <span><i style="background:var(--navy)"></i>Block 1</span>
+        <span><i style="background:var(--orange)"></i>Block 2</span>
+        <span><i style="background:var(--muted)"></i>Perfekte Kalibrierung</span>
+      </div>
+      <div class="note">
+        Jeder Punkt zeigt: Bei allen Fragen, denen Sie diese Konfidenz gegeben haben — wie oft lagen Sie tatsächlich richtig?
+        Punkte auf der Diagonalen bedeuten perfekte Kalibrierung. Punkte darunter bedeuten: Sie waren sicherer, als Sie richtig lagen.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Ihre Werte</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th></th><th>Ø Konfidenz</th><th>Trefferquote</th><th>Differenz</th></tr></thead>
+          <tbody id="myTable"></tbody>
+        </table>
+      </div>
+      <div class="note">Die Differenz ist Ihr Overconfidence-Score: mittlere Konfidenz minus Trefferquote.</div>
+    </div>
+
+    <div class="card center">
+      <p style="margin:0" class="sub">Ihre Daten wurden gespeichert. Die gemeinsame Auswertung erfolgt im Seminar.</p>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN LOGIN ============ -->
+  <div id="adminLogin" class="hidden">
+    <div class="card">
+      <h2 style="margin-top:0">Dozentenansicht</h2>
+      <div class="row">
+        <input type="password" id="pw" placeholder="Passwort">
+        <button class="primary" id="btnPw">Öffnen</button>
+      </div>
+      <div class="err hidden" id="pwErr">Falsches Passwort.</div>
+      <div class="note"><a href="#" id="lnkBack" style="color:var(--muted)">Zurück</a></div>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN PANEL ============ -->
+  <div id="admin" class="hidden">
+    <h1>Auswertung</h1>
+    <p class="sub">Live-Daten aus der Kalibrierungsaufgabe</p>
+
+    <div class="card">
+      <div class="stat">
+        <div><span>Teilnehmende</span><strong id="sN">0</strong></div>
+        <div><span>Reihenfolge A→B</span><strong id="sAB">0</strong></div>
+        <div><span>Reihenfolge B→A</span><strong id="sBA">0</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Kalibrierungskurven — alle Teilnehmenden</h2>
+      <svg id="chart" viewBox="0 0 460 400" style="width:100%;height:auto"></svg>
+      <div class="legend">
+        <span><i style="background:var(--navy)"></i>Set A — selegierte Fragen</span>
+        <span><i style="background:var(--orange)"></i>Set B — zufällig gezogene Fragen</span>
+        <span><i style="background:var(--muted)"></i>Perfekte Kalibrierung</span>
+      </div>
+      <div class="note">Aggregiert über alle Einzelurteile. Punktgröße zeigt die Anzahl der Urteile.</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Overconfidence-Score</h2>
+      <div class="stat">
+        <div><span>Set A (selegiert)</span><strong id="sScoreA">–</strong></div>
+        <div><span>Set B (zufällig)</span><strong id="sScoreB">–</strong></div>
+        <div><span>Differenz</span><strong id="sDiff">–</strong></div>
+      </div>
+      <div class="note">Mittlere Konfidenz minus Trefferquote. Positiv = Overconfidence.</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Reihenfolgeeffekt</h2>
+      <div class="stat">
+        <div><span>Score Block 1</span><strong id="sB1">–</strong></div>
+        <div><span>Score Block 2</span><strong id="sB2">–</strong></div>
+      </div>
+      <div class="note">Falls sich die Blöcke stärker unterscheiden als die Sets, liegt ein Übungs- oder Ermüdungseffekt vor.</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Einzeldaten</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Name</th><th>Folge</th><th>Score Set A</th><th>Score Set B</th><th>Gesamt</th><th>Zeit</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button id="btnCsv">CSV exportieren</button>
+        <button class="danger" id="btnDel">Alle Daten löschen</button>
+        <button id="btnExit">Zurück zur Startseite</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ============================================================
+   1. KONFIGURATION — hier anpassen
+   ============================================================ */
+const firebaseConfig = {
+  apiKey:            "AIzaSyBwkpC_Y_PL2Hea9f1rInZN0YduCbBxpOQ",
+  authDomain:        "urteilen-und-entscheiden-t2.firebaseapp.com",
+  projectId:         "urteilen-und-entscheiden-t2",
+  storageBucket:     "urteilen-und-entscheiden-t2.firebasestorage.app",
+  messagingSenderId: "614100324011",
+  appId:             "1:614100324011:web:5fa0f46173d758bcaa31ee"
+};
+const COLLECTION_NAME = "kalibrierung";
+const ADMIN_PW        = "HSU2026";
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ============================================================
+   2. SET A — selegierte Fragen (Almanach-Tradition)
+   Bewusst so gewählt, dass die plausible Antwort falsch ist.
+   correct: 0 = erste Option, 1 = zweite Option
+   ============================================================ */
+const SET_A = [
+  { q: "Wer wurde früher geboren?",             a: "Julius Caesar",     b: "Konfuzius",         correct: 1 },
+  { q: "Wer wurde früher geboren?",             a: "George Washington", b: "Sunzi (Sun Tzu)",   correct: 1 },
+  { q: "Wer wurde früher geboren?",             a: "Kleopatra",         b: "Mohammed",          correct: 0 },
+  { q: "Wer wurde früher geboren?",             a: "Dschingis Khan",    b: "Leonardo da Vinci", correct: 0 },
+  { q: "Wer wurde früher geboren?",             a: "Königin Victoria",  b: "Karl Marx",         correct: 0 },
+  { q: "Welche Stadt liegt weiter nördlich?",   a: "Rom",               b: "New York",          correct: 0 },
+  { q: "Welches Land hat mehr Einwohner?",      a: "Kanada",            b: "Marokko",           correct: 1 },
+  { q: "Welche Stadt liegt weiter westlich?",   a: "Reno (Nevada)",     b: "Los Angeles",       correct: 0 },
+  { q: "Welches Land ist flächenmäßig größer?", a: "Frankreich",        b: "Madagaskar",        correct: 0 },
+  { q: "Welcher Fluss ist länger?",             a: "Rhein",             b: "Elbe",              correct: 1 }
+];
+
+/* ============================================================
+   3. SET B — Referenzklasse für die Zufallsziehung
+   Alle 27 EU-Mitgliedstaaten mit Einwohnerzahlen (2024, gerundet)
+   Die App zieht daraus 10 zufällige Paare.
+   ============================================================ */
+const EU = [
+  { name: "Deutschland",  pop: 84700000 },
+  { name: "Frankreich",   pop: 68400000 },
+  { name: "Italien",      pop: 58900000 },
+  { name: "Spanien",      pop: 48600000 },
+  { name: "Polen",        pop: 36600000 },
+  { name: "Rumänien",     pop: 19000000 },
+  { name: "Niederlande",  pop: 17900000 },
+  { name: "Belgien",      pop: 11800000 },
+  { name: "Tschechien",   pop: 10900000 },
+  { name: "Schweden",     pop: 10600000 },
+  { name: "Portugal",     pop: 10550000 },
+  { name: "Griechenland", pop: 10400000 },
+  { name: "Ungarn",       pop:  9600000 },
+  { name: "Österreich",   pop:  9200000 },
+  { name: "Bulgarien",    pop:  6400000 },
+  { name: "Dänemark",     pop:  5960000 },
+  { name: "Finnland",     pop:  5620000 },
+  { name: "Slowakei",     pop:  5430000 },
+  { name: "Irland",       pop:  5340000 },
+  { name: "Kroatien",     pop:  3860000 },
+  { name: "Litauen",      pop:  2890000 },
+  { name: "Slowenien",    pop:  2120000 },
+  { name: "Lettland",     pop:  1870000 },
+  { name: "Estland",      pop:  1370000 },
+  { name: "Zypern",       pop:   930000 },
+  { name: "Luxemburg",    pop:   670000 },
+  { name: "Malta",        pop:   560000 }
+];
+
+function buildSetB() {
+  const items = [];
+  const used  = new Set();
+  let guard = 0;
+  while (items.length < 10 && guard < 500) {
+    guard++;
+    const i = Math.floor(Math.random() * EU.length);
+    const j = Math.floor(Math.random() * EU.length);
+    if (i === j) continue;
+    const key = [Math.min(i, j), Math.max(i, j)].join("-");
+    if (used.has(key)) continue;
+    const x = EU[i], y = EU[j];
+    if (x.pop === y.pop) continue;
+    used.add(key);
+    items.push({
+      q: "Welches Land hatte 2024 mehr Einwohner?",
+      a: x.name,
+      b: y.name,
+      correct: x.pop > y.pop ? 0 : 1
+    });
+  }
+  return items;
+}
+
+/* ============================================================
+   4. TEILNEHMER-FLOW  (within-subjects: beide Sets, Folge zufällig)
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const CONF_LEVELS = [55, 65, 75, 85, 95];
+
+let blocks = [];          // [{set:"A", items:[...]}, {set:"B", items:[...]}]
+let order  = "";          // "AB" oder "BA"
+let bi = 0, qi = 0;       // Block-Index, Frage-Index
+let answers = [];
+let curChoice = null, curConf = null;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const k = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[k]] = [arr[k], arr[i]];
+  }
+  return arr;
+}
+
+function show(id) {
+  ["start","quiz","break","result","adminLogin","admin"].forEach(s => $(s).classList.add("hidden"));
+  $(id).classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+
+$("btnStart").addEventListener("click", () => {
+  const a = { set: "A", items: shuffle(SET_A.slice()) };
+  const b = { set: "B", items: shuffle(buildSetB())   };
+  if (Math.random() < 0.5) { blocks = [a, b]; order = "AB"; }
+  else                     { blocks = [b, a]; order = "BA"; }
+  bi = 0; qi = 0; answers = [];
+  show("quiz");
+  render();
+});
+
+$("btnBreak").addEventListener("click", () => {
+  bi = 1; qi = 0;
+  show("quiz");
+  render();
+});
+
+function render() {
+  const it = blocks[bi].items[qi];
+  curChoice = null; curConf = null;
+  $("badge").textContent = `Block ${bi + 1}`;
+  $("qnum").textContent  = `Frage ${qi + 1} von 10`;
+  $("qtext").textContent = it.q;
+  $("optA").textContent  = it.a;
+  $("optB").textContent  = it.b;
+  $("optA").classList.remove("sel");
+  $("optB").classList.remove("sel");
+  document.querySelectorAll(".conf button").forEach(b => b.classList.remove("sel"));
+  $("btnNext").disabled = true;
+  $("bar").style.width = ((bi * 10 + qi) / 20 * 100) + "%";
+}
+
+$("optA").addEventListener("click", () => pick(0));
+$("optB").addEventListener("click", () => pick(1));
+
+function pick(n) {
+  curChoice = n;
+  $("optA").classList.toggle("sel", n === 0);
+  $("optB").classList.toggle("sel", n === 1);
+  checkReady();
+}
+
+document.querySelectorAll(".conf button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    curConf = parseInt(btn.dataset.c, 10);
+    document.querySelectorAll(".conf button").forEach(b => b.classList.remove("sel"));
+    btn.classList.add("sel");
+    checkReady();
+  });
+});
+
+function checkReady() {
+  $("btnNext").disabled = !(curChoice !== null && curConf !== null);
+}
+
+$("btnNext").addEventListener("click", async () => {
+  const blk = blocks[bi];
+  const it  = blk.items[qi];
+  answers.push({
+    block:     bi + 1,
+    set:       blk.set,
+    frage:     it.q,
+    optionA:   it.a,
+    optionB:   it.b,
+    gewaehlt:  curChoice === 0 ? it.a : it.b,
+    korrekt:   curChoice === it.correct,
+    konfidenz: curConf
+  });
+  qi++;
+
+  if (qi < blk.items.length) { render(); return; }
+  if (bi === 0) { show("break"); return; }
+
+  $("bar").style.width = "100%";
+  $("btnNext").disabled = true;
+  $("btnNext").textContent = "Wird gespeichert …";
+  await save();
+  $("btnNext").textContent = "Weiter";
+  showResult();
+});
+
+function scoreOf(list) {
+  if (!list.length) return null;
+  const conf = list.reduce((s, a) => s + a.konfidenz, 0) / list.length;
+  const hit  = list.filter(a => a.korrekt).length / list.length * 100;
+  return { conf: r1(conf), hit: r1(hit), score: r1(conf - hit) };
+}
+const r1 = v => Math.round(v * 10) / 10;
+
+async function save() {
+  const sA  = scoreOf(answers.filter(a => a.set === "A"));
+  const sB  = scoreOf(answers.filter(a => a.set === "B"));
+  const all = scoreOf(answers);
+  try {
+    await addDoc(collection(db, COLLECTION_NAME), {
+      name:        ($("pname").value || "").trim() || "anonym",
+      reihenfolge: order,
+      antworten:   answers,
+      scoreA:      sA ? sA.score : null,
+      scoreB:      sB ? sB.score : null,
+      scoreTotal:  all ? all.score : null,
+      zeitstempel: serverTimestamp()
+    });
+  } catch (e) {
+    console.error("Speichern fehlgeschlagen:", e);
+  }
+}
+
+/* ---- Persönliche Ergebnisansicht (neutral: Block 1 / Block 2) ---- */
+function showResult() {
+  const b1 = answers.filter(a => a.block === 1);
+  const b2 = answers.filter(a => a.block === 2);
+  drawCurves("myChart", [
+    { pts: curvePoints(b1), color: "var(--navy)"   },
+    { pts: curvePoints(b2), color: "var(--orange)" }
+  ]);
+  const rowsHtml = [
+    ["Block 1", scoreOf(b1)],
+    ["Block 2", scoreOf(b2)],
+    ["Gesamt",  scoreOf(answers)]
+  ].map(([label, s]) => `
+    <tr>
+      <td><strong>${label}</strong></td>
+      <td>${s ? s.conf.toFixed(1) : "–"}%</td>
+      <td>${s ? s.hit.toFixed(1) : "–"}%</td>
+      <td><strong>${s ? (s.score > 0 ? "+" : "") + s.score.toFixed(1) : "–"}</strong></td>
+    </tr>`).join("");
+  $("myTable").innerHTML = rowsHtml;
+  show("result");
+}
+
+/* ============================================================
+   5. DIAGRAMM
+   ============================================================ */
+function curvePoints(list) {
+  return CONF_LEVELS.map(c => {
+    const at = list.filter(a => a.konfidenz === c);
+    return { conf: c, n: at.length, hit: at.length ? at.filter(a => a.korrekt).length / at.length * 100 : null };
+  }).filter(p => p.n > 0);
+}
+
+function drawCurves(svgId, series) {
+  const W = 460, H = 400, L = 52, R = 18, T = 18, Bm = 48;
+  const x = v => L + (v - 50) / 50 * (W - L - R);
+  const y = v => H - Bm - (v - 50) / 50 * (H - T - Bm);
+  let s = "";
+
+  for (const v of [50, 60, 70, 80, 90, 100]) {
+    s += `<line x1="${x(v)}" y1="${T}" x2="${x(v)}" y2="${H-Bm}" stroke="var(--border)" stroke-width="1"/>`;
+    s += `<line x1="${L}" y1="${y(v)}" x2="${W-R}" y2="${y(v)}" stroke="var(--border)" stroke-width="1"/>`;
+    s += `<text x="${x(v)}" y="${H-Bm+18}" font-size="11" fill="var(--muted)" text-anchor="middle">${v}%</text>`;
+    s += `<text x="${L-8}" y="${y(v)+4}" font-size="11" fill="var(--muted)" text-anchor="end">${v}%</text>`;
+  }
+
+  s += `<line x1="${x(50)}" y1="${y(50)}" x2="${x(100)}" y2="${y(100)}"
+        stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+
+  s += `<text x="${(L+W-R)/2}" y="${H-8}" font-size="12" fill="var(--navy)" text-anchor="middle">Angegebene Konfidenz</text>`;
+  s += `<text transform="translate(13,${(T+H-Bm)/2}) rotate(-90)" font-size="12" fill="var(--navy)" text-anchor="middle">Tatsächliche Trefferquote</text>`;
+
+  for (const { pts, color } of series) {
+    if (pts.length > 1) {
+      s += `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"
+            points="${pts.map(p => `${x(p.conf)},${y(p.hit)}`).join(" ")}"/>`;
+    }
+    for (const p of pts) {
+      s += `<circle cx="${x(p.conf)}" cy="${y(p.hit)}" r="${Math.min(9, 3.5 + p.n * 0.6)}"
+            fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
+    }
+  }
+  document.getElementById(svgId).innerHTML = s;
+}
+
+/* ============================================================
+   6. ADMIN
+   ============================================================ */
+$("lnkAdmin").addEventListener("click", e => { e.preventDefault(); show("adminLogin"); });
+$("lnkBack").addEventListener("click",  e => { e.preventDefault(); show("start"); });
+$("btnExit").addEventListener("click",  () => { show("start"); });
+
+$("btnPw").addEventListener("click", () => {
+  if ($("pw").value === ADMIN_PW) { $("pwErr").classList.add("hidden"); show("admin"); listen(); }
+  else { $("pwErr").classList.remove("hidden"); }
+});
+$("pw").addEventListener("keydown", e => { if (e.key === "Enter") $("btnPw").click(); });
+
+let rows = [], unsub = null;
+
+function listen() {
+  if (unsub) return;
+  unsub = onSnapshot(collection(db, COLLECTION_NAME), snap => {
+    rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    rows.sort((a, b) => (b.zeitstempel?.seconds || 0) - (a.zeitstempel?.seconds || 0));
+    paint();
+  });
+}
+
+function paint() {
+  const all = rows.flatMap(r => r.antworten || []);
+  const setA = all.filter(a => a.set === "A");
+  const setB = all.filter(a => a.set === "B");
+  const blk1 = all.filter(a => a.block === 1);
+  const blk2 = all.filter(a => a.block === 2);
+
+  $("sN").textContent  = rows.length;
+  $("sAB").textContent = rows.filter(r => r.reihenfolge === "AB").length;
+  $("sBA").textContent = rows.filter(r => r.reihenfolge === "BA").length;
+
+  const scA = scoreOf(setA), scB = scoreOf(setB);
+  $("sScoreA").textContent = scA ? sign(scA.score) : "–";
+  $("sScoreB").textContent = scB ? sign(scB.score) : "–";
+  $("sDiff").textContent   = (scA && scB) ? sign(r1(scA.score - scB.score)) : "–";
+
+  const s1 = scoreOf(blk1), s2 = scoreOf(blk2);
+  $("sB1").textContent = s1 ? sign(s1.score) : "–";
+  $("sB2").textContent = s2 ? sign(s2.score) : "–";
+
+  $("tbody").innerHTML = rows.map(r => `
+    <tr>
+      <td>${esc(r.name || "anonym")}</td>
+      <td><span class="pill pill-${r.reihenfolge === "AB" ? "a" : "b"}">${r.reihenfolge === "AB" ? "A→B" : "B→A"}</span></td>
+      <td>${r.scoreA === null || r.scoreA === undefined ? "–" : sign(r.scoreA)}</td>
+      <td>${r.scoreB === null || r.scoreB === undefined ? "–" : sign(r.scoreB)}</td>
+      <td><strong>${r.scoreTotal === null || r.scoreTotal === undefined ? "–" : sign(r.scoreTotal)}</strong></td>
+      <td>${r.zeitstempel ? new Date(r.zeitstempel.seconds * 1000).toLocaleTimeString("de-DE") : "–"}</td>
+    </tr>`).join("");
+
+  drawCurves("chart", [
+    { pts: curvePoints(setA), color: "var(--navy)"   },
+    { pts: curvePoints(setB), color: "var(--orange)" }
+  ]);
+}
+
+function sign(v) { return (v > 0 ? "+" : "") + Number(v).toFixed(1); }
+
+/* CSV */
+$("btnCsv").addEventListener("click", () => {
+  const head = ["Name","Reihenfolge","Block","Set","Frage","OptionA","OptionB","Gewaehlt","Korrekt","Konfidenz","ScoreA","ScoreB","ScoreGesamt","Zeit"];
+  const lines = [head.join(";")];
+  for (const r of rows) {
+    for (const a of (r.antworten || [])) {
+      lines.push([
+        r.name, r.reihenfolge, a.block, a.set, a.frage, a.optionA, a.optionB, a.gewaehlt,
+        a.korrekt ? "richtig" : "falsch", a.konfidenz,
+        r.scoreA, r.scoreB, r.scoreTotal,
+        r.zeitstempel ? new Date(r.zeitstempel.seconds * 1000).toLocaleString("de-DE") : ""
+      ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";"));
+    }
+  }
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "kalibrierung.csv";
+  a.click();
+});
+
+/* Löschen */
+$("btnDel").addEventListener("click", async () => {
+  if (!confirm("Wirklich ALLE Daten unwiderruflich löschen?")) return;
+  const snap = await getDocs(collection(db, COLLECTION_NAME));
+  await Promise.all(snap.docs.map(d => deleteDoc(doc(db, COLLECTION_NAME, d.id))));
+});
+
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>
