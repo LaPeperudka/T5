@@ -72,6 +72,16 @@
   .legend i { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; }
   .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
   .err { color: var(--orange); font-size: 14px; margin-top: 10px; }
+  .metric {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 7px 0; border-bottom: 1px solid var(--border); gap: 16px;
+  }
+  .metric:last-of-type { border-bottom: none; }
+  .metric span { font-size: 15px; color: var(--navy); }
+  .metric b { font-size: 18px; font-weight: 700; white-space: nowrap; }
+  .qs { padding: 6px 0; font-size: 15px; }
+  .qs b { font-size: 17px; }
+  .qs-sub { color: var(--muted); font-size: 14px; padding: 5px 0 5px 14px; }
   .block-badge {
     display: inline-block; padding: 3px 11px; border-radius: 99px;
     background: #E8EDF6; color: var(--navy); font-size: 12px;
@@ -137,14 +147,30 @@
 
   <!-- ============ RESULT ============ -->
   <div id="result" class="hidden">
-    <h1>Ihre Kalibrierungskurve</h1>
-    <p class="sub">Basierend auf Ihren 20 Antworten</p>
+    <h1>Ihre Auswertung</h1>
+    <p class="sub">Basierend auf Ihren 40 Antworten</p>
 
     <div class="card">
+      <h2 style="margin-top:0">Kalibrierung</h2>
+      <div class="metric"><span>Mittlere Konfidenz</span><b id="mConf">–</b></div>
+      <div class="metric"><span>Tatsächliche Trefferquote</span><b id="mHit">–</b></div>
+      <div class="note" style="margin:4px 0 16px">Idealerweise liegen diese beiden Werte so nah wie möglich beieinander.</div>
+      <div class="metric"><span>Ø Konfidenz bei richtigen Antworten</span><b id="mCorr">–</b></div>
+      <div class="metric"><span>Ø Konfidenz bei falschen Antworten</span><b id="mWrong">–</b></div>
+      <div class="note" style="margin-top:4px">Idealerweise ist Ihre Konfidenz bei richtigen Antworten hoch und bei falschen niedrig.</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Trefferquote</h2>
+      <div id="quizScore"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Kalibrierungsdiagramm</h2>
       <svg id="myChart" viewBox="0 0 460 400" style="width:100%;height:auto"></svg>
       <div class="legend">
-        <span><i style="background:var(--navy)"></i>Block 1</span>
-        <span><i style="background:var(--orange)"></i>Block 2</span>
+        <span><i style="background:var(--navy);height:9px;width:9px;border-radius:99px"></i>Block 1</span>
+        <span><i style="background:var(--orange);height:9px;width:9px;border-radius:99px"></i>Block 2</span>
         <span><i style="background:var(--muted)"></i>Perfekte Kalibrierung</span>
       </div>
       <div class="note">
@@ -154,7 +180,7 @@
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Ihre Werte</h2>
+      <h2 style="margin-top:0">Ihre Blöcke im Vergleich</h2>
       <div style="overflow-x:auto">
         <table>
           <thead><tr><th></th><th>Ø Konfidenz</th><th>Trefferquote</th><th>Differenz</th></tr></thead>
@@ -270,69 +296,99 @@ const db  = getFirestore(app);
 
 /* ============================================================
    2. SET A — selegierte Fragen (Almanach-Tradition)
-   Bewusst so gewählt, dass die plausible Antwort falsch ist.
-   correct: 0 = erste Option, 1 = zweite Option
+   Tier- und naturwissenschaftliche Aussagen aus dem Original.
+   Bewusst so gewählt, dass die plausible Antwort oft falsch ist.
+   correct: 0 = "Richtig", 1 = "Falsch"
    ============================================================ */
 const SET_A = [
-  { q: "Wer wurde früher geboren?",             a: "Julius Caesar",     b: "Konfuzius",         correct: 1 },
-  { q: "Wer wurde früher geboren?",             a: "George Washington", b: "Sunzi (Sun Tzu)",   correct: 1 },
-  { q: "Wer wurde früher geboren?",             a: "Kleopatra",         b: "Mohammed",          correct: 0 },
-  { q: "Wer wurde früher geboren?",             a: "Dschingis Khan",    b: "Leonardo da Vinci", correct: 0 },
-  { q: "Wer wurde früher geboren?",             a: "Königin Victoria",  b: "Karl Marx",         correct: 0 },
-  { q: "Welche Stadt liegt weiter nördlich?",   a: "Rom",               b: "New York",          correct: 0 },
-  { q: "Welches Land hat mehr Einwohner?",      a: "Kanada",            b: "Marokko",           correct: 1 },
-  { q: "Welche Stadt liegt weiter westlich?",   a: "Reno (Nevada)",     b: "Los Angeles",       correct: 0 },
-  { q: "Welches Land ist flächenmäßig größer?", a: "Frankreich",        b: "Madagaskar",        correct: 0 },
-  { q: "Welcher Fluss ist länger?",             a: "Rhein",             b: "Elbe",              correct: 1 }
-];
+  // --- Tiere ---
+  { q: "Der Elefant ist das größte Säugetier der Welt.",                                  correct: 1 }, // Blauwal
+  { q: "Seeotter halten sich im Schlaf manchmal an den Pfoten.",                           correct: 0 },
+  { q: "Hundertfüßer haben mehr Beine als jedes andere Tier.",                             correct: 1 }, // Tausendfüßer
+  { q: "Säugetiere und Dinosaurier lebten gleichzeitig.",                                  correct: 0 },
+  { q: "Bären können nicht auf Bäume klettern.",                                           correct: 1 },
+  { q: "Kamele speichern Wasser in ihren Höckern.",                                        correct: 1 }, // Fett
+  { q: "Flamingos sind rosa, weil sie Krebstiere fressen.",                                correct: 0 },
+  { q: "Der Große Panda ernährt sich überwiegend von Bambus.",                             correct: 0 },
+  { q: "Das Schnabeltier ist das einzige Säugetier, das Eier legt.",                       correct: 1 }, // Ameisenigel
+  { q: "Ein Maultier ist eine Kreuzung aus männlichem Esel und weiblichem Pferd.",         correct: 0 },
+  // --- Naturwissenschaft ---
+  { q: "Der Mars hat einen Mond, genau wie die Erde.",                                     correct: 1 }, // zwei
+  { q: "Skorbut wird durch einen Mangel an Vitamin C verursacht.",                         correct: 0 },
+  { q: "Messing besteht aus Eisen und Kupfer.",                                            correct: 1 }, // Zink und Kupfer
+  { q: "Ein Esslöffel Öl hat mehr Kalorien als ein Esslöffel Butter.",                     correct: 0 },
+  { q: "Helium ist das leichteste Element.",                                               correct: 1 }, // Wasserstoff
+  { q: "Die Erkältung wird durch Bakterien verursacht.",                                   correct: 1 }, // Viren
+  { q: "Der tiefste Punkt der Erde liegt im Pazifischen Ozean.",                           correct: 0 },
+  { q: "Die Jahreszeiten entstehen durch die elliptische Umlaufbahn der Erde um die Sonne.", correct: 1 }, // Achsneigung
+  { q: "Jupiter ist der größte Planet unseres Sonnensystems.",                             correct: 0 },
+  { q: "Die Atome in einem Feststoff sind dichter gepackt als die in einem Gas.",          correct: 0 }
+].map(it => ({ q: it.q, a: "Richtig", b: "Falsch", correct: it.correct }));
 
 /* ============================================================
    3. SET B — Referenzklasse für die Zufallsziehung
-   Alle 27 EU-Mitgliedstaaten mit Einwohnerzahlen (2024, gerundet)
-   Die App zieht daraus 10 zufällige Paare.
+   Alle europäischen Länder über 500.000 Einwohner (2024, gerundet).
+   Definierte Referenzklasse, keine inhaltliche Auswahl.
+   Die App zieht daraus 20 zufällige Paare. Niemand wählt aus.
    ============================================================ */
-const EU = [
-  { name: "Deutschland",  pop: 84700000 },
-  { name: "Frankreich",   pop: 68400000 },
-  { name: "Italien",      pop: 58900000 },
-  { name: "Spanien",      pop: 48600000 },
-  { name: "Polen",        pop: 36600000 },
-  { name: "Rumänien",     pop: 19000000 },
-  { name: "Niederlande",  pop: 17900000 },
-  { name: "Belgien",      pop: 11800000 },
-  { name: "Tschechien",   pop: 10900000 },
-  { name: "Schweden",     pop: 10600000 },
-  { name: "Portugal",     pop: 10550000 },
-  { name: "Griechenland", pop: 10400000 },
-  { name: "Ungarn",       pop:  9600000 },
-  { name: "Österreich",   pop:  9200000 },
-  { name: "Bulgarien",    pop:  6400000 },
-  { name: "Dänemark",     pop:  5960000 },
-  { name: "Finnland",     pop:  5620000 },
-  { name: "Slowakei",     pop:  5430000 },
-  { name: "Irland",       pop:  5340000 },
-  { name: "Kroatien",     pop:  3860000 },
-  { name: "Litauen",      pop:  2890000 },
-  { name: "Slowenien",    pop:  2120000 },
-  { name: "Lettland",     pop:  1870000 },
-  { name: "Estland",      pop:  1370000 },
-  { name: "Zypern",       pop:   930000 },
-  { name: "Luxemburg",    pop:   670000 },
-  { name: "Malta",        pop:   560000 }
+const EUROPA = [
+  { name: "Russland (europ. Teil)", pop: 110000000 },
+  { name: "Deutschland",            pop:  84700000 },
+  { name: "Frankreich",             pop:  68400000 },
+  { name: "Vereinigtes Königreich", pop:  68300000 },
+  { name: "Italien",                pop:  58900000 },
+  { name: "Spanien",                pop:  48600000 },
+  { name: "Ukraine",                pop:  37000000 },
+  { name: "Polen",                  pop:  36600000 },
+  { name: "Rumänien",               pop:  19000000 },
+  { name: "Niederlande",            pop:  17900000 },
+  { name: "Belgien",                pop:  11800000 },
+  { name: "Tschechien",             pop:  10900000 },
+  { name: "Schweden",               pop:  10600000 },
+  { name: "Portugal",               pop:  10550000 },
+  { name: "Griechenland",           pop:  10400000 },
+  { name: "Aserbaidschan",          pop:  10200000 },
+  { name: "Ungarn",                 pop:   9600000 },
+  { name: "Weißrussland",           pop:   9250000 },
+  { name: "Österreich",             pop:   9200000 },
+  { name: "Schweiz",                pop:   8900000 },
+  { name: "Serbien",                pop:   6600000 },
+  { name: "Bulgarien",              pop:   6400000 },
+  { name: "Dänemark",               pop:   5960000 },
+  { name: "Finnland",               pop:   5620000 },
+  { name: "Norwegen",               pop:   5550000 },
+  { name: "Slowakei",               pop:   5430000 },
+  { name: "Irland",                 pop:   5340000 },
+  { name: "Kroatien",               pop:   3860000 },
+  { name: "Georgien",               pop:   3700000 },
+  { name: "Bosnien-Herzegowina",    pop:   3200000 },
+  { name: "Litauen",                pop:   2890000 },
+  { name: "Armenien",               pop:   2780000 },
+  { name: "Albanien",               pop:   2750000 },
+  { name: "Moldau",                 pop:   2500000 },
+  { name: "Slowenien",              pop:   2120000 },
+  { name: "Lettland",               pop:   1870000 },
+  { name: "Nordmazedonien",         pop:   1830000 },
+  { name: "Kosovo",                 pop:   1760000 },
+  { name: "Estland",                pop:   1370000 },
+  { name: "Zypern",                 pop:    930000 },
+  { name: "Luxemburg",              pop:    670000 },
+  { name: "Montenegro",             pop:    620000 },
+  { name: "Malta",                  pop:    560000 }
 ];
 
 function buildSetB() {
   const items = [];
   const used  = new Set();
   let guard = 0;
-  while (items.length < 10 && guard < 500) {
+  while (items.length < 20 && guard < 3000) {
     guard++;
-    const i = Math.floor(Math.random() * EU.length);
-    const j = Math.floor(Math.random() * EU.length);
+    const i = Math.floor(Math.random() * EUROPA.length);
+    const j = Math.floor(Math.random() * EUROPA.length);
     if (i === j) continue;
     const key = [Math.min(i, j), Math.max(i, j)].join("-");
     if (used.has(key)) continue;
-    const x = EU[i], y = EU[j];
+    const x = EUROPA[i], y = EUROPA[j];
     if (x.pop === y.pop) continue;
     used.add(key);
     items.push({
@@ -480,16 +536,46 @@ async function save() {
 
 /* ---- Persönliche Ergebnisansicht (neutral: Block 1 / Block 2) ---- */
 function showResult() {
-  const b1 = answers.filter(a => a.block === 1);
-  const b2 = answers.filter(a => a.block === 2);
+  const b1  = answers.filter(a => a.block === 1);
+  const b2  = answers.filter(a => a.block === 2);
+  const all = scoreOf(answers);
+
+  // Kalibrierungs-Kennzahlen
+  const corr  = answers.filter(a => a.korrekt);
+  const wrong = answers.filter(a => !a.korrekt);
+  const meanOf = list => list.length
+    ? (list.reduce((s, a) => s + a.konfidenz, 0) / list.length).toFixed(2) + "%"
+    : "–";
+  $("mConf").textContent  = all.conf.toFixed(2) + "%";
+  $("mHit").textContent   = all.hit.toFixed(2) + "%";
+  $("mCorr").textContent  = meanOf(corr);
+  $("mWrong").textContent = meanOf(wrong);
+
+  // Trefferquote, aufgeschlüsselt nach Konfidenzniveau
+  const band = (label, levels) => {
+    const at = answers.filter(a => levels.includes(a.konfidenz));
+    if (!at.length) return "";
+    const n = at.filter(a => a.korrekt).length;
+    return `<div class="qs-sub"><b>${n}</b> von <b>${at.length}</b> Fragen mit ${label} Konfidenz richtig (<b>${(n / at.length * 100).toFixed(2)}%</b>)</div>`;
+  };
+  const nAll = answers.filter(a => a.korrekt).length;
+  $("quizScore").innerHTML =
+    `<div class="qs"><b>${nAll}</b> von <b>${answers.length}</b> Fragen richtig beantwortet (<b>${all.hit.toFixed(2)}%</b>)</div>`
+    + band("niedriger (55% oder 65%)", [55, 65])
+    + band("mittlerer (75%)", [75])
+    + band("hoher (85% oder 95%)", [85, 95]);
+
+  // Punktdiagramm
   drawCurves("myChart", [
     { pts: curvePoints(b1), color: "var(--navy)"   },
     { pts: curvePoints(b2), color: "var(--orange)" }
-  ]);
-  const rowsHtml = [
+  ], false);
+
+  // Blockvergleich
+  $("myTable").innerHTML = [
     ["Block 1", scoreOf(b1)],
     ["Block 2", scoreOf(b2)],
-    ["Gesamt",  scoreOf(answers)]
+    ["Gesamt",  all]
   ].map(([label, s]) => `
     <tr>
       <td><strong>${label}</strong></td>
@@ -497,7 +583,7 @@ function showResult() {
       <td>${s ? s.hit.toFixed(1) : "–"}%</td>
       <td><strong>${s ? (s.score > 0 ? "+" : "") + s.score.toFixed(1) : "–"}</strong></td>
     </tr>`).join("");
-  $("myTable").innerHTML = rowsHtml;
+
   show("result");
 }
 
@@ -511,14 +597,14 @@ function curvePoints(list) {
   }).filter(p => p.n > 0);
 }
 
-function drawCurves(svgId, series) {
+function drawCurves(svgId, series, lines = true) {
   const W = 460, H = 400, L = 52, R = 18, T = 18, Bm = 48;
-  const x = v => L + (v - 50) / 50 * (W - L - R);
+  const x = v => L + (v / 100) * (W - L - R);
   const y = v => H - Bm - (v / 100) * (H - T - Bm);
   let s = "";
 
-  // Vertikale Gitterlinien + X-Achsenbeschriftung (Konfidenz 50-100%)
-  for (const v of [50, 60, 70, 80, 90, 100]) {
+  // Vertikale Gitterlinien + X-Achsenbeschriftung (0-100%)
+  for (const v of [0, 20, 40, 60, 80, 100]) {
     s += `<line x1="${x(v)}" y1="${T}" x2="${x(v)}" y2="${H-Bm}" stroke="var(--border)" stroke-width="1"/>`;
     s += `<text x="${x(v)}" y="${H-Bm+18}" font-size="11" fill="var(--muted)" text-anchor="middle">${v}%</text>`;
   }
@@ -535,7 +621,7 @@ function drawCurves(svgId, series) {
   s += `<text x="${W-R-2}" y="${y(50)-5}" font-size="9" fill="var(--muted)" text-anchor="end">Zufallsniveau</text>`;
 
   // Diagonale = perfekte Kalibrierung
-  s += `<line x1="${x(50)}" y1="${y(50)}" x2="${x(100)}" y2="${y(100)}"
+  s += `<line x1="${x(0)}" y1="${y(0)}" x2="${x(100)}" y2="${y(100)}"
         stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
 
   // Achsentitel
@@ -543,12 +629,12 @@ function drawCurves(svgId, series) {
   s += `<text transform="translate(13,${(T+H-Bm)/2}) rotate(-90)" font-size="12" fill="var(--navy)" text-anchor="middle">Tatsächliche Trefferquote</text>`;
 
   for (const { pts, color } of series) {
-    if (pts.length > 1) {
+    if (lines && pts.length > 1) {
       s += `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"
             points="${pts.map(p => `${x(p.conf)},${y(p.hit)}`).join(" ")}"/>`;
     }
     for (const p of pts) {
-      s += `<circle cx="${x(p.conf)}" cy="${y(p.hit)}" r="${Math.min(9, 3.5 + p.n * 0.6)}"
+      s += `<circle cx="${x(p.conf)}" cy="${y(p.hit)}" r="${lines ? Math.min(9, 3.5 + p.n * 0.6) : 5.5}"
             fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
     }
   }
